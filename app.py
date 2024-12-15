@@ -66,6 +66,18 @@ def check_ghosting():
     
     return render_template('check_ghosting.html')
 
+@app.route('/delete/<int:id>', methods=['POST'])
+def delete_application(id):
+    application = Application.query.get_or_404(id)
+    try:
+        db.session.delete(application)
+        db.session.commit()
+        flash('Application record deleted successfully', 'success')
+    except:
+        flash('Error deleting application record', 'error')
+        db.session.rollback()
+    return redirect(url_for('view_applications'))
+
 @app.route('/applications')
 def view_applications():
     applications = Application.query.order_by(Application.application_date.desc()).all()
