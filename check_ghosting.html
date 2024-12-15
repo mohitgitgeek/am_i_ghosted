@@ -1,0 +1,134 @@
+<!-- templates/check_ghosting.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghosted Checker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Company Ghosting Checker</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-blue-100 border-blue-500 text-blue-700 px-4 py-3 rounded mb-4" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="company_name">
+                    Company Name
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       id="company_name" name="company_name" type="text" required>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="location">
+                    Location
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       id="location" name="location" type="text" required>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="application_date">
+                    Application Date
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       id="application_date" name="application_date" type="date" required>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="last_contact_date">
+                    Last Contact Date (if any)
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       id="last_contact_date" name="last_contact_date" type="date">
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        type="submit">
+                    Check Status
+                </button>
+                <a href="{{ url_for('view_applications') }}"
+                   class="text-blue-500 hover:text-blue-800">
+                    View All Applications
+                </a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+
+<!-- templates/applications.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application History</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Application History</h1>
+            <a href="{{ url_for('check_ghosting') }}" 
+               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                New Check
+            </a>
+        </div>
+        
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="px-4 py-2">Company</th>
+                            <th class="px-4 py-2">Location</th>
+                            <th class="px-4 py-2">Application Date</th>
+                            <th class="px-4 py-2">Last Contact</th>
+                            <th class="px-4 py-2">Status</th>
+                            <th class="px-4 py-2">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr class="{% if loop.index % 2 == 0 %}bg-gray-50{% endif %}">
+                            <td class="border px-4 py-2">{{ app.company_name }}</td>
+                            <td class="border px-4 py-2">{{ app.location }}</td>
+                            <td class="border px-4 py-2">{{ app.application_date.strftime('%Y-%m-%d') }}</td>
+                            <td class="border px-4 py-2">
+                                {{ app.last_contact_date.strftime('%Y-%m-%d') if app.last_contact_date else 'N/A' }}
+                            </td>
+                            <td class="border px-4 py-2">
+                                <span class="px-2 py-1 rounded text-sm
+                                    {% if app.status == 'Likely ghosted' %}
+                                        bg-red-200 text-red-800
+                                    {% elif app.status == 'Follow up recommended' %}
+                                        bg-yellow-200 text-yellow-800
+                                    {% else %}
+                                        bg-green-200 text-green-800
+                                    {% endif %}">
+                                    {{ app.status }}
+                                </span>
+                            </td>
+                            <td class="border px-4 py-2">{{ app.notes }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

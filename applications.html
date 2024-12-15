@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application History - Ghosting Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Application History</h1>
+            <a href="{{ url_for('check_ghosting') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                New Check
+            </a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-blue-100 border-blue-500 text-blue-700 px-4 py-3 rounded mb-4" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-4 py-2 text-left">Company</th>
+                            <th class="px-4 py-2 text-left">Location</th>
+                            <th class="px-4 py-2 text-left">Application Date</th>
+                            <th class="px-4 py-2 text-left">Last Contact</th>
+                            <th class="px-4 py-2 text-left">Status</th>
+                            <th class="px-4 py-2 text-left">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr class="border-t">
+                            <td class="px-4 py-2">{{ app.company_name }}</td>
+                            <td class="px-4 py-2">{{ app.location }}</td>
+                            <td class="px-4 py-2">{{ app.application_date.strftime('%Y-%m-%d') }}</td>
+                            <td class="px-4 py-2">{{ app.last_contact_date.strftime('%Y-%m-%d') if app.last_contact_date else 'N/A' }}</td>
+                            <td class="px-4 py-2">
+                                <span class="px-2 py-1 rounded text-sm {% if app.status == 'Likely ghosted' %}bg-red-200 text-red-800{% elif app.status == 'Follow up recommended' %}bg-yellow-200 text-yellow-800{% else %}bg-green-200 text-green-800{% endif %}">
+                                    {{ app.status }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2">{{ app.notes }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
