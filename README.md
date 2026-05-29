@@ -5,7 +5,7 @@ My second project that focuses on Ghost Hiring.
 
 This repository now includes a GitHub Actions workflow at:
 
-- `/tmp/workspace/mohitgitgeek/am_i_ghosted/.github/workflows/deploy-pages.yml`
+- `.github/workflows/deploy-pages.yml`
 
 How to enable the deployment in GitHub:
 

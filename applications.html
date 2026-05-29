@@ -61,7 +61,11 @@
         };
 
         const renderApplications = () => {
-            const applications = getApplications().sort((a, b) => b.application_date.localeCompare(a.application_date));
+            const applications = getApplications().sort((a, b) => {
+                const dateA = (a && typeof a.application_date === 'string') ? a.application_date : '';
+                const dateB = (b && typeof b.application_date === 'string') ? b.application_date : '';
+                return dateB.localeCompare(dateA);
+            });
             tableBody.innerHTML = '';
 
             if (applications.length === 0) {
@@ -115,6 +119,7 @@
                 deleteButton.className = 'bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm';
                 deleteButton.textContent = 'Delete';
                 deleteButton.addEventListener('click', () => {
+                    if (!window.confirm('Are you sure you want to delete this application record?')) return;
                     const updated = getApplications().filter((item) => item.id !== app.id);
                     saveApplications(updated);
                     renderApplications();
@@ -126,11 +131,11 @@
             });
         };
 
-        const params = new URLSearchParams(window.location.search);
-        const message = params.get('message');
+        const message = sessionStorage.getItem('ghostedMessage');
         if (message) {
             messageBox.textContent = message;
             messageBox.classList.remove('hidden');
+            sessionStorage.removeItem('ghostedMessage');
         }
 
         renderApplications();

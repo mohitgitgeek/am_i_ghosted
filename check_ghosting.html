@@ -115,7 +115,8 @@
             });
 
             localStorage.setItem(storageKey, JSON.stringify(applications));
-            window.location.href = `applications.html?message=${encodeURIComponent(notes)}`;
+            sessionStorage.setItem('ghostedMessage', notes);
+            window.location.href = 'applications.html';
         });
     </script>
 </body>
