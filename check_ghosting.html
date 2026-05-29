@@ -1,4 +1,3 @@
-<!-- templates/check_ghosting.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,18 +9,10 @@
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-bold mb-8">Company Ghosting Checker</h1>
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="bg-blue-100 border-blue-500 text-blue-700 px-4 py-3 rounded mb-4" role="alert">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        <form method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+
+        <div id="message" class="hidden bg-blue-100 border-blue-500 text-blue-700 px-4 py-3 rounded mb-4" role="alert"></div>
+
+        <form id="ghosting-form" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="company_name">
                     Company Name
@@ -59,76 +50,91 @@
                         type="submit">
                     Check Status
                 </button>
-                <a href="{{ url_for('view_applications') }}"
+                <a href="applications.html"
                    class="text-blue-500 hover:text-blue-800">
                     View All Applications
                 </a>
             </div>
         </form>
     </div>
-</body>
-</html>
 
-<!-- templates/applications.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Application History</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold">Application History</h1>
-            <a href="{{ url_for('check_ghosting') }}" 
-               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                New Check
-            </a>
-        </div>
-        
-        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <div class="overflow-x-auto">
-                <table class="min-w-full table-auto">
-                    <thead>
-                        <tr class="bg-gray-200">
-                            <th class="px-4 py-2">Company</th>
-                            <th class="px-4 py-2">Location</th>
-                            <th class="px-4 py-2">Application Date</th>
-                            <th class="px-4 py-2">Last Contact</th>
-                            <th class="px-4 py-2">Status</th>
-                            <th class="px-4 py-2">Notes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for app in applications %}
-                        <tr class="{% if loop.index % 2 == 0 %}bg-gray-50{% endif %}">
-                            <td class="border px-4 py-2">{{ app.company_name }}</td>
-                            <td class="border px-4 py-2">{{ app.location }}</td>
-                            <td class="border px-4 py-2">{{ app.application_date.strftime('%Y-%m-%d') }}</td>
-                            <td class="border px-4 py-2">
-                                {{ app.last_contact_date.strftime('%Y-%m-%d') if app.last_contact_date else 'N/A' }}
-                            </td>
-                            <td class="border px-4 py-2">
-                                <span class="px-2 py-1 rounded text-sm
-                                    {% if app.status == 'Likely ghosted' %}
-                                        bg-red-200 text-red-800
-                                    {% elif app.status == 'Follow up recommended' %}
-                                        bg-yellow-200 text-yellow-800
-                                    {% else %}
-                                        bg-green-200 text-green-800
-                                    {% endif %}">
-                                    {{ app.status }}
-                                </span>
-                            </td>
-                            <td class="border px-4 py-2">{{ app.notes }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <script>
+        const storageKey = 'ghostedApplications';
+        const form = document.getElementById('ghosting-form');
+        const messageBox = document.getElementById('message');
+
+        const showMessage = (message) => {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden');
+        };
+
+        const getApplications = () => {
+            try {
+                return JSON.parse(localStorage.getItem(storageKey)) || [];
+            } catch (error) {
+                console.error('Failed to parse applications from localStorage:', error);
+                return [];
+            }
+        };
+
+        const toUtcTimestamp = (dateString) => {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return null;
+            const [year, month, day] = dateString.split('-').map(Number);
+            const utcTime = Date.UTC(year, month - 1, day);
+            return Number.isNaN(utcTime) ? null : utcTime;
+        };
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const companyName = document.getElementById('company_name').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const applicationDate = document.getElementById('application_date').value;
+            const lastContactDate = document.getElementById('last_contact_date').value;
+
+            if (!companyName || !location || !applicationDate) {
+                showMessage('Please fill in all required fields.');
+                return;
+            }
+
+            const startDate = lastContactDate || applicationDate;
+            const today = new Date();
+            const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+            const startUtc = toUtcTimestamp(startDate);
+            if (startUtc === null || startUtc > todayUtc) {
+                showMessage('Please enter a valid date that is not in the future.');
+                return;
+            }
+            const daysSinceContact = Math.floor((todayUtc - startUtc) / (1000 * 60 * 60 * 24));
+
+            let status = 'Active';
+            let notes = 'Application is still active. Keep waiting.';
+
+            if (daysSinceContact > 14) {
+                status = 'Likely ghosted';
+                notes = `It's been ${daysSinceContact} days since last contact. You may have been ghosted.`;
+            } else if (daysSinceContact > 7) {
+                status = 'Follow up recommended';
+                notes = 'Consider sending a follow-up email.';
+            }
+
+            const applications = getApplications();
+            applications.push({
+                id: (window.crypto && typeof window.crypto.randomUUID === 'function')
+                    ? window.crypto.randomUUID()
+                    : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                company_name: companyName,
+                location,
+                application_date: applicationDate,
+                last_contact_date: lastContactDate || null,
+                status,
+                notes
+            });
+
+            localStorage.setItem(storageKey, JSON.stringify(applications));
+            sessionStorage.setItem('ghostedMessage', notes);
+            window.location.href = 'applications.html';
+        });
+    </script>
 </body>
 </html>
