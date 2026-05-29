@@ -51,6 +51,8 @@
                     typeof item.id !== 'undefined' &&
                     typeof item.company_name === 'string' &&
                     typeof item.location === 'string' &&
+                    typeof item.application_date === 'string' &&
+                    (item.last_contact_date === null || typeof item.last_contact_date === 'string') &&
                     typeof item.status === 'string' &&
                     typeof item.notes === 'string'
                 );
@@ -72,7 +74,9 @@
 
         const dateValue = (dateString) => {
             if (typeof dateString !== 'string') return Number.MIN_SAFE_INTEGER;
-            const timestamp = Date.parse(`${dateString}T00:00:00Z`);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return Number.MIN_SAFE_INTEGER;
+            const [year, month, day] = dateString.split('-').map(Number);
+            const timestamp = Date.UTC(year, month - 1, day);
             return Number.isNaN(timestamp) ? Number.MIN_SAFE_INTEGER : timestamp;
         };
 
