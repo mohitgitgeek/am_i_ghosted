@@ -70,11 +70,15 @@
             return 'bg-green-200 text-green-800';
         };
 
+        const dateValue = (dateString) => {
+            if (typeof dateString !== 'string') return 0;
+            const timestamp = Date.parse(`${dateString}T00:00:00Z`);
+            return Number.isNaN(timestamp) ? 0 : timestamp;
+        };
+
         const renderApplications = () => {
             const applications = getApplications().sort((a, b) => {
-                const dateA = (a && typeof a.application_date === 'string') ? a.application_date : '';
-                const dateB = (b && typeof b.application_date === 'string') ? b.application_date : '';
-                return dateB.localeCompare(dateA);
+                return dateValue(b?.application_date) - dateValue(a?.application_date);
             });
             tableBody.innerHTML = '';
 

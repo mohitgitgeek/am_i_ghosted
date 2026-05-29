@@ -77,6 +77,11 @@
             }
         };
 
+        const toUtcDate = (dateString) => {
+            const [year, month, day] = dateString.split('-').map(Number);
+            return Date.UTC(year, month - 1, day);
+        };
+
         form.addEventListener('submit', (event) => {
             event.preventDefault();
 
@@ -91,7 +96,9 @@
             }
 
             const startDate = lastContactDate || applicationDate;
-            const daysSinceContact = Math.floor((Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+            const today = new Date();
+            const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+            const daysSinceContact = Math.floor((todayUtc - toUtcDate(startDate)) / (1000 * 60 * 60 * 24));
 
             let status = 'Active';
             let notes = 'Application is still active. Keep waiting.';
