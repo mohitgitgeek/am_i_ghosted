@@ -10,20 +10,12 @@
     <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold">Application History</h1>
-            <a href="{{ url_for('check_ghosting') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <a href="check_ghosting.html" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 New Check
             </a>
         </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="bg-blue-100 border-blue-500 text-blue-700 px-4 py-3 rounded mb-4" role="alert">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <div id="message" class="hidden bg-blue-100 border-blue-500 text-blue-700 px-4 py-3 rounded mb-4" role="alert"></div>
 
         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div class="overflow-x-auto">
@@ -39,34 +31,109 @@
                             <th class="px-4 py-2 text-left">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for app in applications %}
-                        <tr class="border-t">
-                            <td class="px-4 py-2">{{ app.company_name }}</td>
-                            <td class="px-4 py-2">{{ app.location }}</td>
-                            <td class="px-4 py-2">{{ app.application_date.strftime('%Y-%m-%d') }}</td>
-                            <td class="px-4 py-2">{{ app.last_contact_date.strftime('%Y-%m-%d') if app.last_contact_date else 'N/A' }}</td>
-                            <td class="px-4 py-2">
-                                <span class="px-2 py-1 rounded text-sm {% if app.status == 'Likely ghosted' %}bg-red-200 text-red-800{% elif app.status == 'Follow up recommended' %}bg-yellow-200 text-yellow-800{% else %}bg-green-200 text-green-800{% endif %}">
-                                    {{ app.status }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2">{{ app.notes }}</td>
-                            <td class="px-4 py-2">
-                                <form action="{{ url_for('delete_application', id=app.id) }}" method="POST" class="inline">
-                                    <button type="submit" 
-                                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
-                                            onclick="return confirm('Are you sure you want to delete this application record?')">
-                                        Delete
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
+                    <tbody id="applications-body"></tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <script>
+        const storageKey = 'ghostedApplications';
+        const tableBody = document.getElementById('applications-body');
+        const messageBox = document.getElementById('message');
+
+        const getApplications = () => {
+            try {
+                return JSON.parse(localStorage.getItem(storageKey)) || [];
+            } catch (error) {
+                return [];
+            }
+        };
+
+        const saveApplications = (applications) => {
+            localStorage.setItem(storageKey, JSON.stringify(applications));
+        };
+
+        const statusClasses = (status) => {
+            if (status === 'Likely ghosted') return 'bg-red-200 text-red-800';
+            if (status === 'Follow up recommended') return 'bg-yellow-200 text-yellow-800';
+            return 'bg-green-200 text-green-800';
+        };
+
+        const renderApplications = () => {
+            const applications = getApplications().sort((a, b) => b.application_date.localeCompare(a.application_date));
+            tableBody.innerHTML = '';
+
+            if (applications.length === 0) {
+                const row = document.createElement('tr');
+                row.className = 'border-t';
+
+                const cell = document.createElement('td');
+                cell.colSpan = 7;
+                cell.className = 'px-4 py-4 text-center text-gray-500';
+                cell.textContent = 'No applications yet. Start by adding one.';
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+                return;
+            }
+
+            applications.forEach((app) => {
+                const row = document.createElement('tr');
+                row.className = 'border-t';
+
+                const fields = [
+                    app.company_name,
+                    app.location,
+                    app.application_date,
+                    app.last_contact_date || 'N/A'
+                ];
+
+                fields.forEach((value) => {
+                    const cell = document.createElement('td');
+                    cell.className = 'px-4 py-2';
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+
+                const statusCell = document.createElement('td');
+                statusCell.className = 'px-4 py-2';
+                const badge = document.createElement('span');
+                badge.className = `px-2 py-1 rounded text-sm ${statusClasses(app.status)}`;
+                badge.textContent = app.status;
+                statusCell.appendChild(badge);
+                row.appendChild(statusCell);
+
+                const notesCell = document.createElement('td');
+                notesCell.className = 'px-4 py-2';
+                notesCell.textContent = app.notes;
+                row.appendChild(notesCell);
+
+                const actionCell = document.createElement('td');
+                actionCell.className = 'px-4 py-2';
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm';
+                deleteButton.textContent = 'Delete';
+                deleteButton.addEventListener('click', () => {
+                    const updated = getApplications().filter((item) => item.id !== app.id);
+                    saveApplications(updated);
+                    renderApplications();
+                });
+                actionCell.appendChild(deleteButton);
+                row.appendChild(actionCell);
+
+                tableBody.appendChild(row);
+            });
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const message = params.get('message');
+        if (message) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+
+        renderApplications();
+    </script>
 </body>
 </html>
