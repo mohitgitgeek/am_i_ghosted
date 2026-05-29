@@ -1,6 +1,26 @@
 # am_i_ghosted
 My second project that focuses on Ghost Hiring.
 
+## Full-stack Flask app (frontend + DB + backend + ML)
+
+Run the complete application locally:
+
+```sh
+pip install -r requirements.txt
+python app.py
+# open http://localhost:5000
+```
+
+- **Frontend:** Jinja templates in `templates/` (Tailwind-styled), POSTing to Flask.
+- **Backend:** Flask (`app.py`) — check status, list history, delete records.
+- **Database:** SQLite via SQLAlchemy (`ghosted.db`), storing every application + its ML score.
+- **Machine Learning:** `ml_model.py` trains a scikit-learn **LogisticRegression** that estimates the
+  probability an application has been ghosted from days-since-last-contact and whether the company ever
+  replied; the result page shows it as a percentage bar.
+
+> The root-level `index.html`, `check_ghosting.html`, and `applications.html` remain a **static,
+> localStorage-only** version of the app deployed via GitHub Pages (no backend required).
+
 ## GitHub Pages Deployment
 
 This repository now includes a GitHub Actions workflow at:

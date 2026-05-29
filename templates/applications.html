@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application History - Ghosting Checker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Application History</h1>
+            <a href="{{ url_for('check_ghosting') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">New Check</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-4 py-2 text-left">Company</th>
+                            <th class="px-4 py-2 text-left">Location</th>
+                            <th class="px-4 py-2 text-left">Application Date</th>
+                            <th class="px-4 py-2 text-left">Last Contact</th>
+                            <th class="px-4 py-2 text-left">Status</th>
+                            <th class="px-4 py-2 text-left">Ghost %</th>
+                            <th class="px-4 py-2 text-left">Notes</th>
+                            <th class="px-4 py-2 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        {% set color = 'green' if app.status == 'Active' else ('yellow' if app.status == 'Follow up recommended' else 'red') %}
+                        <tr class="border-t">
+                            <td class="px-4 py-2">{{ app.company_name }}</td>
+                            <td class="px-4 py-2">{{ app.location }}</td>
+                            <td class="px-4 py-2">{{ app.application_date.strftime('%Y-%m-%d') }}</td>
+                            <td class="px-4 py-2">{{ app.last_contact_date.strftime('%Y-%m-%d') if app.last_contact_date else 'N/A' }}</td>
+                            <td class="px-4 py-2"><span class="px-2 py-1 rounded text-sm bg-{{ color }}-200 text-{{ color }}-800">{{ app.status }}</span></td>
+                            <td class="px-4 py-2">{{ '%.1f'|format(app.ghost_probability * 100) ~ '%' if app.ghost_probability is not none else '—' }}</td>
+                            <td class="px-4 py-2">{{ app.notes }}</td>
+                            <td class="px-4 py-2">
+                                <form method="POST" action="{{ url_for('delete_application', id=app.id) }}"
+                                      onsubmit="return confirm('Delete this application record?');">
+                                    <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr class="border-t"><td colspan="8" class="px-4 py-4 text-center text-gray-500">No applications yet. Start by adding one.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

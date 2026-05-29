@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghosted Checker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8" style="max-width: 640px;">
+        <h1 class="text-3xl font-bold mb-8">Company Ghosting Checker</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        {% if result %}
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-6">
+            <h2 class="text-xl font-bold mb-2">Result</h2>
+            {% set color = 'green' if result.status == 'Active' else ('yellow' if result.status == 'Follow up recommended' else 'red') %}
+            <p><span class="px-2 py-1 rounded text-sm bg-{{ color }}-200 text-{{ color }}-800">{{ result.status }}</span></p>
+            <p class="mt-2 text-gray-700">{{ result.message }}</p>
+            {% if result.probability is not none %}
+            <div class="mt-4">
+                <p class="text-sm font-bold text-gray-700">ML-estimated ghosting probability: {{ result.probability }}%</p>
+                <div class="w-full bg-gray-200 rounded h-3 mt-1">
+                    <div class="bg-{{ color }}-500 h-3 rounded" style="width: {{ result.probability }}%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Estimated by a logistic-regression model from days since last contact.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <form id="ghosting-form" method="POST" action="{{ url_for('check_ghosting') }}" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="company_name">Company Name</label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       id="company_name" name="company_name" type="text" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="location">Location</label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       id="location" name="location" type="text" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="application_date">Application Date</label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       id="application_date" name="application_date" type="date" required>
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="last_contact_date">Last Contact Date (if any)</label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       id="last_contact_date" name="last_contact_date" type="date">
+            </div>
+            <div class="flex items-center justify-between">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                    Check Status
+                </button>
+                <a href="{{ url_for('view_applications') }}" class="text-blue-500 hover:text-blue-800">View All Applications</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
