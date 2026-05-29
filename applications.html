@@ -71,14 +71,14 @@
         };
 
         const dateValue = (dateString) => {
-            if (typeof dateString !== 'string') return 0;
+            if (typeof dateString !== 'string') return Number.MIN_SAFE_INTEGER;
             const timestamp = Date.parse(`${dateString}T00:00:00Z`);
-            return Number.isNaN(timestamp) ? 0 : timestamp;
+            return Number.isNaN(timestamp) ? Number.MIN_SAFE_INTEGER : timestamp;
         };
 
         const renderApplications = () => {
             const applications = getApplications().sort((a, b) => {
-                return dateValue(b?.application_date) - dateValue(a?.application_date);
+                return dateValue(b.application_date) - dateValue(a.application_date);
             });
             tableBody.innerHTML = '';
 
